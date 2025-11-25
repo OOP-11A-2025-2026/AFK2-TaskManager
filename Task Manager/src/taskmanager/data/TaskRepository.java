@@ -53,5 +53,13 @@ public class TaskRepository {
         return false;
     }
 
-    // GET BY ASSIGNEE AND THIRD RULE!!!
+    public ArrayList<Task> getByAssignee(String personId) {
+        ArrayList<Task> result = new ArrayList<>();
+        for (Task task : tasks) {
+            if (task.getAssignee().getId().equals(personId)) {
+                result.add(task);
+            }
+        }
+        return result;
+    }
 }

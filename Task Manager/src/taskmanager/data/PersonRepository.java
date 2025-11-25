@@ -10,6 +10,11 @@ public class PersonRepository {
 
     public PersonRepository() {
         people = new ArrayList<>();
+        // Preload 4 team members
+        people.add(new Person("1", "Filip", "1234567890"));
+        people.add(new Person("2", "Kristian", "0987654321"));
+        people.add(new Person("3", "Angelina", "1122334455"));
+        people.add(new Person("4", "Kaloyan", "5566778899"));
     }
 
     public PersonRepository(ArrayList<Person> people) {
@@ -22,7 +27,7 @@ public class PersonRepository {
 
     public boolean exists(String id) {
         for(int i = 0; i < people.size(); i++) {
-            if(people.get(i).id.equals(id)) {
+            if(people.get(i).getId().equals(id)) {
                 return true;
             }
         }

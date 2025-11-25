@@ -6,125 +6,116 @@ public class Task {
     private String id;
     private String title;
     private String description;
-    //private Category category;
-    //private Status status;
-    //private Person assignee;
+    private Category category;
+    private Status status;
+    private Person assignee;
     private LocalDate dueDate;
     private String eisenhower;
 
-    public Task(String id, String title/*, Category category, Person assignee*/) {
-        if(id.trim().isEmpty() || id == null) {
-            throw new IllegalArgumentException("id is null or empty");
-        }
-        if(title.trim().isEmpty() || title == null) {
-            throw new IllegalArgumentException("title is null or empty");
-        }
+    // Minimal constructor
+    public Task(String id, String title, Category category, Person assignee) {
+        if (id == null || id.trim().isEmpty()) throw new IllegalArgumentException("ID cannot be empty");
+        if (title == null || title.trim().isEmpty()) throw new IllegalArgumentException("Title cannot be empty");
+        if (category == null) throw new IllegalArgumentException("Category cannot be null");
+        if (assignee == null) throw new IllegalArgumentException("Assignee cannot be null");
 
         this.id = id;
         this.title = title;
-        /*
         this.category = category;
         this.assignee = assignee;
-        */
+        this.status = Status.TO_DO; // Default status
+        this.description = "";
+        this.eisenhower = "I"; // Default or null? Requirements say values: "I", "II", "III", "IV". Let's default to I or handle null.
     }
 
-    public Task(String id, String title, String eisenhower, LocalDate dueDate, String description/*, Category category, Person assignee, Status status*/) {
-        if(id.trim().isEmpty() || id == null) {
-            throw new IllegalArgumentException("id is null or empty");
+    // Full constructor
+    public Task(String id, String title, String description, Category category, Status status, Person assignee, LocalDate dueDate, String eisenhower) {
+        if (id == null || id.trim().isEmpty()) throw new IllegalArgumentException("ID cannot be empty");
+        if (title == null || title.trim().isEmpty()) throw new IllegalArgumentException("Title cannot be empty");
+        if (category == null) throw new IllegalArgumentException("Category cannot be null");
+        if (status == null) throw new IllegalArgumentException("Status cannot be null");
+        if (assignee == null) throw new IllegalArgumentException("Assignee cannot be null");
+        
+        if (dueDate != null && dueDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Due date cannot be in the past");
         }
-        if(description.trim().isEmpty() || description == null) {
-            throw new IllegalArgumentException("description is null or empty");
-        }
-        if(title.trim().isEmpty() || title == null) {
-            throw new IllegalArgumentException("title is null or empty");
-        }
-        if(eisenhower.equals("I") || eisenhower.equals("II") || eisenhower.equals("III") || eisenhower.equals("IV")) {
-            this.eisenhower = eisenhower;
-        } else throw new IllegalArgumentException("eisenhower is illegal");
-
-        if(dueDate.isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("dueDate is before now");
+        
+        if (eisenhower != null && !eisenhower.matches("I|II|III|IV")) {
+            throw new IllegalArgumentException("Eisenhower must be I, II, III, or IV");
         }
 
-        this.description = description;
         this.id = id;
         this.title = title;
-        this.dueDate = dueDate;
-        /*
-        if(category == null) {
-            throw new IllegalArgumentException("category is null");
-        }
-        if(assignee == null) {
-            throw new IllegalArgumentException("assignee is null");
-        }
-        if(status == null) {
-            throw new IllegalArgumentException("status is null");
-        }
-
+        this.description = description == null ? "" : description;
         this.category = category;
-        this.assignee = assignee;
         this.status = status;
-        */
-    }
-
-    // Getters and Setters:
-    public String getId() {
-        return id;
-    }
-
-
-    public String getTitle() {
-        return title;
-    }
-    protected void setTitle(String title) {
-        if(title.trim().isEmpty() || title == null) {
-            throw new IllegalArgumentException("title is null or empty");
-        }
-        this.title = title;
-    }
-    public String getDescription() {
-        return description;
-    }
-    protected void setDescription(String description) {
-        if(description.trim().isEmpty() || description == null) {
-            throw new IllegalArgumentException("description is null or empty");
-        }
-        this.description = description;
-    }
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
-    protected void setDueDate(LocalDate dueDate) {
-        if(dueDate.isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("dueDate is before now");
-        }
+        this.assignee = assignee;
         this.dueDate = dueDate;
-    }
-    public String getEisenhower() {
-        return eisenhower;
-    }
-    protected void setEisenhower(String eisenhower) {
-        if(eisenhower.equals("I") || eisenhower.equals("II") || eisenhower.equals("III") || eisenhower.equals("IV")) {
-            this.eisenhower = eisenhower;
-        } else throw new IllegalArgumentException("eisenhower is illegal");
         this.eisenhower = eisenhower;
     }
 
-    /*
-    public void updateStatus(Status s) {
-        if(status == null) {
-            throw new IllegalArgumentException("status is null");
-        }
-        status = s;
+    // Getters
+    public String getId() { return id; }
+    public String getTitle() { return title; }
+    public String getDescription() { return description; }
+    public Category getCategory() { return category; }
+    public Status getStatus() { return status; }
+    public Person getAssignee() { return assignee; }
+    public LocalDate getDueDate() { return dueDate; }
+    public String getEisenhower() { return eisenhower; }
+
+    // Setters
+    public void setTitle(String title) {
+        if (title == null || title.trim().isEmpty()) throw new IllegalArgumentException("Title cannot be empty");
+        this.title = title;
     }
 
-    public void assignPerson(Person p) {
-        if(assignee == null) {
-            throw new IllegalArgumentException("assignee is null");
+    public void setDescription(String description) {
+        this.description = description == null ? "" : description;
+    }
+
+    public void setCategory(Category category) {
+        if (category == null) throw new IllegalArgumentException("Category cannot be null");
+        this.category = category;
+    }
+
+    public void updateStatus(Status status) {
+        if (status == null) throw new IllegalArgumentException("Status cannot be null");
+        this.status = status;
+    }
+
+    public void assignPerson(Person assignee) {
+        if (assignee == null) throw new IllegalArgumentException("Assignee cannot be null");
+        this.assignee = assignee;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        if (dueDate != null && dueDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Due date cannot be in the past");
         }
-        assignee = p;
-      }
-     */
+        this.dueDate = dueDate;
+    }
+
+    public void setEisenhower(String eisenhower) {
+        if (eisenhower != null && !eisenhower.matches("I|II|III|IV")) {
+            throw new IllegalArgumentException("Eisenhower must be I, II, III, or IV");
+        }
+        this.eisenhower = eisenhower;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("--------------------------------------------------\n");
+        sb.append(String.format("Task ID: %s | Status: %s | Category: %s\n", id, status, category));
+        sb.append(String.format("Title: %s\n", title));
+        sb.append(String.format("Assignee: %s\n", assignee.getName()));
+        if (dueDate != null) sb.append(String.format("Due Date: %s\n", dueDate));
+        if (eisenhower != null) sb.append(String.format("Priority: %s\n", eisenhower));
+        if (description != null && !description.isEmpty()) sb.append(String.format("Description: %s\n", description));
+        sb.append("--------------------------------------------------");
+        return sb.toString();
+    }
 
 
 }

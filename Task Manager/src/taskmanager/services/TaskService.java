@@ -22,7 +22,7 @@ public class TaskService
         this.taskRepo = taskRepo;
     }
 
-    public Task createTask(String id, String title, String description, Category category, String assigneeId, LocalDate dueDate, String eisenhower)
+    public Task createTask(String title, String description, Category category, String assigneeId, LocalDate dueDate, String eisenhower)
     {
         Person assignee = null;
         if (assigneeId != null)
@@ -32,8 +32,11 @@ public class TaskService
             {
                 throw new NotFoundException("Person with ID " + assigneeId + " doesn't exist.");
             }
+        } else {
+             throw new InvalidDataException("Assignee ID is required.");
         }
 
+        String id = UUID.randomUUID().toString().substring(0, 8); // Simple ID generation
         Task task = new Task(id, title, description, category, Status.TO_DO, assignee, dueDate, eisenhower);
 
         taskRepo.add(task);
@@ -68,9 +71,15 @@ public class TaskService
             throw new InvalidDataException("Invalid category: " + catToken);
         }
 
-        String id = UUID.randomUUID().toString();
+        String id = UUID.randomUUID().toString().substring(0, 8);
+        
+        // Assign to first available person for shortcut or throw if empty
+        if (personRepo.getPeople().isEmpty()) {
+             throw new InvalidDataException("No people available to assign task to.");
+        }
+        Person defaultAssignee = personRepo.getPeople().get(0);
 
-        Task task = new Task(id, title, "", category, Status.TO_DO, null, null, null);
+        Task task = new Task(id, title, category, defaultAssignee);
         taskRepo.add(task);
         return task;
     }
@@ -108,7 +117,7 @@ public class TaskService
         task.setTitle(title);
         task.setDescription(description);
         task.setCategory(category);
-        task.setAssignee(assignee);
+        task.assignPerson(assignee);
         task.setDueDate(dueDate);
         task.setEisenhower(eisenhower);
         task.updateStatus(status);
@@ -146,5 +155,51 @@ public class TaskService
         if (keyword == null || keyword.isEmpty()) {return readAll();}
         String lower = keyword.toLowerCase();
         return taskRepo.getAll().stream().filter(t -> t.getTitle().toLowerCase().contains(lower) || t.getDescription().toLowerCase().contains(lower)).collect(Collectors.toList());
+    }
+
+    public void updateStatus(String id, Status status) {
+        Task task = taskRepo.findById(id);
+        if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
+        task.updateStatus(status);
+    }
+
+    public void updateDueDate(String id, LocalDate date) {
+        Task task = taskRepo.findById(id);
+        if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
+        task.setDueDate(date);
+    }
+
+    public void updateEisenhower(String id, String eisenhower) {
+        Task task = taskRepo.findById(id);
+        if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
+        task.setEisenhower(eisenhower);
+    }
+
+    public void updateTitle(String id, String title) {
+        Task task = taskRepo.findById(id);
+        if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
+        task.setTitle(title);
+    }
+
+    public void updateDescription(String id, String description) {
+        Task task = taskRepo.findById(id);
+        if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
+        task.setDescription(description);
+    }
+
+    public void updateCategory(String id, Category category) {
+        Task task = taskRepo.findById(id);
+        if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
+        task.setCategory(category);
+    }
+
+    public void updateAssignee(String id, String assigneeId) {
+        Task task = taskRepo.findById(id);
+        if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
+        
+        Person assignee = personRepo.findById(assigneeId);
+        if (assignee == null) throw new NotFoundException("Person with ID " + assigneeId + " doesn't exist.");
+        
+        task.assignPerson(assignee);
     }
 }

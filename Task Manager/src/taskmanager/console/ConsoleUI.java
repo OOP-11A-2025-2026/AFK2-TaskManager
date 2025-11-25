@@ -5,6 +5,9 @@ import taskmanager.exceptions.InvalidCommandException;
 import taskmanager.exceptions.InvalidDataException;
 import taskmanager.exceptions.NotFoundException;
 import taskmanager.exceptions.RepositoryException;
+import taskmanager.data.PersonRepository;
+import taskmanager.data.TaskRepository;
+import taskmanager.services.TaskService;
 
 /**
  * ConsoleUI Class (Part C3)
@@ -21,7 +24,11 @@ public class ConsoleUI {
     private static final String SEPARATOR = "================================";
 
     public ConsoleUI() {
-        this.commandParser = new CommandParser();
+        PersonRepository personRepo = new PersonRepository();
+        TaskRepository taskRepo = new TaskRepository();
+        TaskService taskService = new TaskService(personRepo, taskRepo);
+        
+        this.commandParser = new CommandParser(taskService);
         this.scanner = new Scanner(System.in);
     }
 
