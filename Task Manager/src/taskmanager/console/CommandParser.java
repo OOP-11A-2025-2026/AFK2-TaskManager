@@ -167,17 +167,25 @@ public class CommandParser {
     }
 
     private void showHelp() {
-        System.out.println("Available Commands:");
-        System.out.printf("%-40s - %s%n", "create, c", "Create a new task (interactive)");
-        System.out.printf("%-40s - %s%n", "create /bug <title>, c /bug <title>", "Shortcut to create a bug");
-        System.out.printf("%-40s - %s%n", "read, r", "Show all tasks");
-        System.out.printf("%-40s - %s%n", "read <personID>, r <personID>", "Show tasks for a person");
-        System.out.printf("%-40s - %s%n", "update <taskID>, u <taskID>", "Update a task");
-        System.out.printf("%-40s - %s%n", "delete <taskID>, d <taskID>", "Delete a task");
-        System.out.printf("%-40s - %s%n", "sort due", "Sort by due date");
-        System.out.printf("%-40s - %s%n", "sort cat", "Sort by category");
-        System.out.printf("%-40s - %s%n", "sort eisenhower", "Sort by Eisenhower matrix");
-        System.out.printf("%-40s - %s%n", "help", "Show this help");
-        System.out.printf("%-40s - %s%n", "exit", "Exit the application");
+        System.out.println("\n================================");
+        System.out.println("   AVAILABLE COMMANDS");
+        System.out.println("================================");
+        System.out.println("\n📝 TASK OPERATIONS:");
+        System.out.printf("  %-35s - %s%n", "create, c", "Create a new task (interactive)");
+        System.out.printf("  %-35s - %s%n", "create /bug <title>", "Shortcut to create a bug");
+        System.out.printf("  %-35s - %s%n", "read, r", "Show all tasks");
+        System.out.printf("  %-35s - %s%n", "read <personID>, r <personID>", "Show tasks for a person");
+        System.out.printf("  %-35s - %s%n", "update <taskID>, u <taskID>", "Update a task");
+        System.out.printf("  %-35s - %s%n", "delete <taskID>, d <taskID>", "Delete a task");
+        
+        System.out.println("\n🔍 SORTING:");
+        System.out.printf("  %-35s - %s%n", "sort due", "Sort by due date");
+        System.out.printf("  %-35s - %s%n", "sort cat", "Sort by category");
+        System.out.printf("  %-35s - %s%n", "sort eisenhower", "Sort by Eisenhower matrix");
+        
+        System.out.println("\n🛠️  UTILITIES:");
+        System.out.printf("  %-35s - %s%n", "help", "Show this help menu");
+        System.out.printf("  %-35s - %s%n", "exit, quit", "Exit the application");
+        System.out.println("\n================================\n");
     }
 }
