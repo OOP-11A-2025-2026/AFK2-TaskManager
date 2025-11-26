@@ -54,7 +54,7 @@ public class ConsoleUI {
                 }
 
                 // Handle exit command
-                if (input.equalsIgnoreCase("exit") || input.equalsIgnoreCase("quit")) {
+                if (input.equalsIgnoreCase("exit") || input.equalsIgnoreCase("quit") || input.equalsIgnoreCase("q")) {
                     displayGoodbyeMessage();
                     break;
                 }

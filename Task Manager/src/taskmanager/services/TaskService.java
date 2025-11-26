@@ -58,17 +58,37 @@ public class TaskService
         {
             throw new InvalidDataException("Shortcut must contain a title after the category.");
         }
-        String catToken = parts[0].substring(1).toUpperCase();
+        String catToken = parts[0].substring(1).toLowerCase();
         String title = parts[1];
 
+        // map common shortcut names to Category enum
         Category category;
-        try
-        {
-            category = Category.valueOf(catToken);
-        }
-        catch (Exception e)
-        {
-            throw new InvalidDataException("Invalid category: " + catToken);
+        switch (catToken) {
+            case "bug":
+            case "bug_fix":
+            case "bugfix":
+                category = Category.BUG_FIX;
+                break;
+            case "feature":
+            case "feat":
+                category = Category.FEATURE;
+                break;
+            case "refactor":
+                category = Category.REFACTOR;
+                break;
+            case "doc":
+            case "documentation":
+                category = Category.DOCUMENTATION;
+                break;
+            case "other":
+                category = Category.OTHER;
+                break;
+            default:
+                try {
+                    category = Category.valueOf(catToken.toUpperCase());
+                } catch (Exception e) {
+                    throw new InvalidDataException("Invalid category shortcut: " + catToken);
+                }
         }
 
         String id = UUID.randomUUID().toString().substring(0, 8);
@@ -82,6 +102,15 @@ public class TaskService
         Task task = new Task(id, title, category, defaultAssignee);
         taskRepo.add(task);
         return task;
+    }
+
+    // Expose people list for Console UI
+    public List<Person> listPeople() {
+        return Collections.unmodifiableList(personRepo.getPeople());
+    }
+
+    public boolean personExists(String id) {
+        return personRepo.exists(id);
     }
 
     public List<Task> readAll() {return taskRepo.getAll();}

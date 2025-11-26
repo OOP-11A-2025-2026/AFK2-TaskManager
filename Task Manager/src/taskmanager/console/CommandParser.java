@@ -43,7 +43,12 @@ public class CommandParser {
                 handleSort(args);
                 break;
             case "help":
+            case "h":
                 showHelp();
+                break;
+            case "q":
+                // console UI handles quitting; still accept and treat as exit hint
+                System.out.println("Type 'quit' or 'exit' to leave the app.");
                 break;
             default:
                 throw new InvalidCommandException("Unknown command: " + command);
@@ -51,10 +56,11 @@ public class CommandParser {
     }
 
     private void handleCreate(String args, Scanner scanner) {
-        if (args.startsWith("/bug ")) {
-            // Shortcut creation
+        if (args.startsWith("/")) {
+            // Shortcut creation (any /<token> ... )
             service.createTaskShortcut(args);
             System.out.println("Task created via shortcut.");
+            return;
         } else if (args.isEmpty()) {
             System.out.println("--- Create New Task ---");
             System.out.print("Title: ");
@@ -64,26 +70,42 @@ public class CommandParser {
             System.out.print("Description: ");
             String description = scanner.nextLine().trim();
 
-            System.out.print("Category (BUG_FIX, FEATURE, REFACTOR, DOCUMENTATION, OTHER): ");
-            String categoryStr = scanner.nextLine().trim().toUpperCase();
+            // Show categories as numbered list and accept number
+            System.out.println("Select category:");
+            Category[] cats = Category.values();
+            for (int i = 0; i < cats.length; i++) {
+                String pretty = cats[i].name().replace('_', ' ').toLowerCase();
+                pretty = pretty.substring(0,1).toUpperCase() + pretty.substring(1);
+                System.out.printf("  %d) %s\n", i+1, pretty);
+            }
+            System.out.print("Enter number: ");
+            String catChoice = scanner.nextLine().trim();
             Category category;
             try {
-                category = Category.valueOf(categoryStr);
-            } catch (IllegalArgumentException e) {
-                throw new InvalidCommandException("Invalid category.");
+                int choice = Integer.parseInt(catChoice);
+                if (choice < 1 || choice > cats.length) throw new NumberFormatException();
+                category = cats[choice-1];
+            } catch (NumberFormatException e) {
+                throw new InvalidCommandException("Invalid category selection.");
             }
 
+            // List people with IDs
+            System.out.println("Available team members:");
+            service.listPeople().forEach(p -> System.out.println("  " + p.toString()));
             System.out.print("Assignee ID: ");
             String assigneeId = scanner.nextLine().trim();
-
-            System.out.print("Due Date (YYYY-MM-DD) [Optional]: ");
+            if (!service.personExists(assigneeId)) {
+                throw new InvalidCommandException("No person with ID: " + assigneeId);
+            }
+            System.out.print("Due Date (dd MM yyyy) [Optional]: ");
             String dateStr = scanner.nextLine().trim();
             LocalDate dueDate = null;
             if (!dateStr.isEmpty()) {
                 try {
-                    dueDate = LocalDate.parse(dateStr);
+                    java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd MM yyyy");
+                    dueDate = LocalDate.parse(dateStr, fmt);
                 } catch (DateTimeParseException e) {
-                    throw new InvalidCommandException("Invalid date format. Use YYYY-MM-DD.");
+                    throw new InvalidCommandException("Invalid date format. Use dd MM yyyy (e.g. 26 11 2025).");
                 }
             }
 
@@ -138,14 +160,15 @@ public class CommandParser {
                 }
                 break;
             case "2":
-                System.out.print("New Due Date (YYYY-MM-DD): ");
+                System.out.print("New Due Date (dd MM yyyy): ");
                 String dateStr = scanner.nextLine().trim();
                 try {
-                    LocalDate date = LocalDate.parse(dateStr);
-                    service.updateDueDate(taskId, date); // I will add this to Service
+                    java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd MM yyyy");
+                    LocalDate date = LocalDate.parse(dateStr, fmt);
+                    service.updateDueDate(taskId, date);
                     System.out.println("Due date updated.");
                 } catch (DateTimeParseException e) {
-                    System.out.println("Invalid date format.");
+                    System.out.println("Invalid date format. Use dd MM yyyy.");
                 }
                 break;
             case "3":

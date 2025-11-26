@@ -110,7 +110,10 @@ public class Task {
         sb.append(String.format("Task ID: %s | Status: %s | Category: %s\n", id, status, category));
         sb.append(String.format("Title: %s\n", title));
         sb.append(String.format("Assignee: %s\n", assignee.getName()));
-        if (dueDate != null) sb.append(String.format("Due Date: %s\n", dueDate));
+        if (dueDate != null) {
+            java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd MM yyyy");
+            sb.append(String.format("Due Date: %s\n", dueDate.format(fmt)));
+        }
         if (eisenhower != null) sb.append(String.format("Priority: %s\n", eisenhower));
         if (description != null && !description.isEmpty()) sb.append(String.format("Description: %s\n", description));
         sb.append("--------------------------------------------------");
