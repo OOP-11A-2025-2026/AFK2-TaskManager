@@ -40,6 +40,8 @@ public class TaskService
         Task task = new Task(id, title, description, category, Status.TO_DO, assignee, dueDate, eisenhower);
 
         taskRepo.add(task);
+        // persist
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
         return task;
     }
 
@@ -101,6 +103,7 @@ public class TaskService
 
         Task task = new Task(id, title, category, defaultAssignee);
         taskRepo.add(task);
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
         return task;
     }
 
@@ -151,6 +154,7 @@ public class TaskService
         task.setEisenhower(eisenhower);
         task.updateStatus(status);
 
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
         return task;
     }
 
@@ -161,6 +165,7 @@ public class TaskService
         {
             throw new NotFoundException("No task with ID " + id + " for deletion.");
         }
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
     }
 
     public List<Task> sortByDueDate()
@@ -186,40 +191,54 @@ public class TaskService
         return taskRepo.getAll().stream().filter(t -> t.getTitle().toLowerCase().contains(lower) || t.getDescription().toLowerCase().contains(lower)).collect(Collectors.toList());
     }
 
-    public void updateStatus(String id, Status status) {
+    public boolean updateStatus(String id, Status status) {
         Task task = taskRepo.findById(id);
         if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
+
+        // If marking as DONE, remove the task from repository
+        if (status == Status.DONE) {
+            deleteTask(id);
+            return true;
+        }
+
         task.updateStatus(status);
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
+        return false;
     }
 
     public void updateDueDate(String id, LocalDate date) {
         Task task = taskRepo.findById(id);
         if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
         task.setDueDate(date);
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
     }
 
     public void updateEisenhower(String id, String eisenhower) {
         Task task = taskRepo.findById(id);
         if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
         task.setEisenhower(eisenhower);
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
     }
 
     public void updateTitle(String id, String title) {
         Task task = taskRepo.findById(id);
         if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
         task.setTitle(title);
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
     }
 
     public void updateDescription(String id, String description) {
         Task task = taskRepo.findById(id);
         if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
         task.setDescription(description);
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
     }
 
     public void updateCategory(String id, Category category) {
         Task task = taskRepo.findById(id);
         if (task == null) throw new NotFoundException("Task with ID " + id + " is not found.");
         task.setCategory(category);
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
     }
 
     public void updateAssignee(String id, String assigneeId) {
@@ -230,5 +249,6 @@ public class TaskService
         if (assignee == null) throw new NotFoundException("Person with ID " + assigneeId + " doesn't exist.");
         
         task.assignPerson(assignee);
+        try { taskRepo.saveAll(); } catch (Exception ignored) {}
     }
 }

@@ -36,7 +36,7 @@ public class CommandParser {
                 break;
             case "delete":
             case "d":
-                handleDelete(args);
+                handleDelete(args, scanner);
                 break;
             case "sort":
             case "s":
@@ -57,8 +57,81 @@ public class CommandParser {
 
     private void handleCreate(String args, Scanner scanner) {
         if (args.startsWith("/")) {
-            // Shortcut creation (any /<token> ... )
-            service.createTaskShortcut(args);
+            // Shortcut creation (any /<token> <title> ) -> interactive remainder
+            String[] parts = args.trim().split(" ", 2);
+            if (parts.length < 2) throw new InvalidCommandException("Shortcut must contain a title after the category.");
+            String catToken = parts[0].substring(1).toLowerCase();
+            String title = parts[1].trim();
+
+            // map common shortcut names to Category enum
+            Category category;
+            switch (catToken) {
+                case "bug":
+                case "bug_fix":
+                case "bugfix":
+                    category = Category.BUG_FIX;
+                    break;
+                case "feature":
+                case "feat":
+                    category = Category.FEATURE;
+                    break;
+                case "refactor":
+                    category = Category.REFACTOR;
+                    break;
+                case "doc":
+                case "documentation":
+                    category = Category.DOCUMENTATION;
+                    break;
+                case "other":
+                    category = Category.OTHER;
+                    break;
+                default:
+                    try {
+                        category = Category.valueOf(catToken.toUpperCase());
+                    } catch (Exception e) {
+                        throw new InvalidCommandException("Invalid category shortcut: " + catToken);
+                    }
+            }
+
+            System.out.println("--- Create New Task (shortcut) ---");
+            System.out.println("Title: " + title);
+            System.out.print("Description: ");
+            String description = scanner.nextLine().trim();
+
+            // List people with IDs
+            System.out.println("Available team members:");
+            service.listPeople().forEach(p -> System.out.println("  " + p.toString()));
+            System.out.print("Assignee ID: ");
+            String assigneeId = scanner.nextLine().trim();
+            if (!service.personExists(assigneeId)) {
+                throw new InvalidCommandException("No person with ID: " + assigneeId);
+            }
+
+            System.out.print("Due Date (dd MM yyyy) [Optional]: ");
+            String dateStr = scanner.nextLine().trim();
+            java.time.LocalDate dueDate = null;
+            if (!dateStr.isEmpty()) {
+                try {
+                    java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd MM yyyy");
+                    dueDate = java.time.LocalDate.parse(dateStr, fmt);
+                } catch (java.time.format.DateTimeParseException e) {
+                    throw new InvalidCommandException("Invalid date format. Use dd MM yyyy (e.g. 26 11 2025).");
+                }
+            }
+
+            System.out.println("Eisenhower mapping:");
+            System.out.println("  I   -> Important, Urgent");
+            System.out.println("  II  -> Important, Not urgent");
+            System.out.println("  III -> Not important, Urgent");
+            System.out.println("  IV  -> Not important, Not urgent");
+            System.out.print("Eisenhower (I, II, III, IV) [Optional]: ");
+            String eisenhower = scanner.nextLine().trim().toUpperCase();
+            if (eisenhower.isEmpty()) eisenhower = null;
+            else if (!eisenhower.matches("I|II|III|IV")) {
+                throw new InvalidCommandException("Invalid Eisenhower value. Must be I, II, III, or IV.");
+            }
+
+            service.createTask(title, description, category, assigneeId, dueDate, eisenhower);
             System.out.println("Task created via shortcut.");
             return;
         } else if (args.isEmpty()) {
@@ -109,6 +182,11 @@ public class CommandParser {
                 }
             }
 
+            System.out.println("Eisenhower mapping:");
+            System.out.println("  I   -> Important, Urgent");
+            System.out.println("  II  -> Important, Not urgent");
+            System.out.println("  III -> Not important, Urgent");
+            System.out.println("  IV  -> Not important, Not urgent");
             System.out.print("Eisenhower (I, II, III, IV) [Optional]: ");
             String eisenhower = scanner.nextLine().trim().toUpperCase();
             if (eisenhower.isEmpty()) eisenhower = null;
@@ -132,10 +210,25 @@ public class CommandParser {
     }
 
     private void handleUpdate(String args, Scanner scanner) {
-        if (args.isEmpty()) {
-            throw new InvalidCommandException("Task ID required for update.");
-        }
         String taskId = args;
+        if (taskId.isEmpty()) {
+            // prompt user to select
+            System.out.println("Select a task to update:");
+            java.util.List<taskmanager.core.Task> all = service.readAll();
+            if (all.isEmpty()) { System.out.println("No tasks available."); return; }
+            for (int i = 0; i < all.size(); i++) {
+                System.out.printf("  %d) %s (ID: %s)\n", i+1, all.get(i).getTitle(), all.get(i).getId());
+            }
+            System.out.print("Enter number: ");
+            String sel = scanner.nextLine().trim();
+            try {
+                int idx = Integer.parseInt(sel);
+                if (idx < 1 || idx > all.size()) throw new NumberFormatException();
+                taskId = all.get(idx-1).getId();
+            } catch (NumberFormatException e) {
+                throw new InvalidCommandException("Invalid selection.");
+            }
+        }
         System.out.println("--- Update Task " + taskId + " ---");
         System.out.println("1. Update Status");
         System.out.println("2. Update Due Date");
@@ -153,8 +246,9 @@ public class CommandParser {
                 String statusStr = scanner.nextLine().trim().toUpperCase();
                 try {
                     Status status = Status.valueOf(statusStr);
-                    service.updateStatus(taskId, status); // I will add this to Service
-                    System.out.println("Status updated.");
+                    boolean deleted = service.updateStatus(taskId, status);
+                    if (deleted) System.out.println("Task marked DONE and removed from list.");
+                    else System.out.println("Status updated.");
                 } catch (IllegalArgumentException e) {
                     System.out.println("Invalid status.");
                 }
@@ -172,6 +266,11 @@ public class CommandParser {
                 }
                 break;
             case "3":
+                System.out.println("Eisenhower mapping:");
+                System.out.println("  I   -> Important, Urgent");
+                System.out.println("  II  -> Important, Not urgent");
+                System.out.println("  III -> Not important, Urgent");
+                System.out.println("  IV  -> Not important, Not urgent");
                 System.out.print("New Eisenhower (I, II, III, IV): ");
                 String eisenhower = scanner.nextLine().trim().toUpperCase();
                 if (!eisenhower.matches("I|II|III|IV")) {
@@ -216,12 +315,27 @@ public class CommandParser {
         }
     }
 
-    private void handleDelete(String args) {
-        if (args.isEmpty()) {
-            throw new InvalidCommandException("Task ID required for delete.");
+    private void handleDelete(String args, Scanner scanner) {
+        String taskId = args;
+        if (taskId.isEmpty()) {
+            System.out.println("Select a task to delete:");
+            java.util.List<taskmanager.core.Task> all = service.readAll();
+            if (all.isEmpty()) { System.out.println("No tasks available."); return; }
+            for (int i = 0; i < all.size(); i++) {
+                System.out.printf("  %d) %s (ID: %s)\n", i+1, all.get(i).getTitle(), all.get(i).getId());
+            }
+            System.out.print("Enter number: ");
+            String sel = scanner.nextLine().trim();
+            try {
+                int idx = Integer.parseInt(sel);
+                if (idx < 1 || idx > all.size()) throw new NumberFormatException();
+                taskId = all.get(idx-1).getId();
+            } catch (NumberFormatException e) {
+                throw new InvalidCommandException("Invalid selection.");
+            }
         }
-        service.deleteTask(args);
-        System.out.println("Deleted task: " + args);
+        service.deleteTask(taskId);
+        System.out.println("Deleted task: " + taskId);
     }
 
     private void handleSort(String args) {
@@ -233,6 +347,12 @@ public class CommandParser {
                 service.sortByCategory().forEach(System.out::println);
                 break;
             case "eisenhower":
+                System.out.println("Eisenhower mapping:");
+                System.out.println("  I   -> Important, Urgent");
+                System.out.println("  II  -> Important, Not urgent");
+                System.out.println("  III -> Not important, Urgent");
+                System.out.println("  IV  -> Not important, Not urgent");
+                System.out.println();
                 service.sortByEisenhower().forEach(System.out::println);
                 break;
             default:

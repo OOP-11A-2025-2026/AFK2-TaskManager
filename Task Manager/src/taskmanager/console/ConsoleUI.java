@@ -25,7 +25,7 @@ public class ConsoleUI {
 
     public ConsoleUI() {
         PersonRepository personRepo = new PersonRepository();
-        TaskRepository taskRepo = new TaskRepository();
+        TaskRepository taskRepo = new TaskRepository(personRepo);
         TaskService taskService = new TaskService(personRepo, taskRepo);
         
         this.commandParser = new CommandParser(taskService);
